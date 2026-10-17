@@ -1,5 +1,3 @@
-# git push -u origin mainAGUIK
-
 **Une bibliothèque de composants UI néobrutalistes en Go, construite sur [Gio](https://gioui.org/).**
 
 AGUIK est une bibliothèque de composants d'interface graphique conçue pour créer des applications desktop en Go avec un style néobrutaliste, des composants réutilisables et une API de composition inspirée des primitives de layout de Gio.
