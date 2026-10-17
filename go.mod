@@ -1,0 +1,23 @@
+module github.com/Shiro-Masuta/AGUIK
+
+go 1.26.1
+
+require (
+	gioui.org v0.10.2
+	golang.org/x/exp/shiny v0.0.0-20250408133849-7e4ce0ab07d0
+)
+
+require (
+	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 // indirect
+	github.com/godbus/dbus/v5 v5.0.6 // indirect
+)
+
+require (
+	gioui.org/shader v1.0.9 // indirect
+	gioui.org/x v0.10.2
+	github.com/go-text/typesetting v0.3.4 // indirect
+	golang.org/x/image v0.26.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+)
