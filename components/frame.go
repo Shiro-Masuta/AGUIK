@@ -96,6 +96,17 @@ func NeoFrame(gtx layout.Context, th *theme.Theme, innerW, innerH int, bg color.
 	}
 }
 
+// neoFrameOverheadX est la largeur que NeoFrame ajoute autour du contenu
+// (marges de lift/ombre + bordures). Garder synchronisé avec NeoFrame.
+func neoFrameOverheadX(gtx layout.Context, th *theme.Theme) int {
+	dp := func(v float32) int { return gtx.Dp(unit.Dp(v)) }
+	baseX := dp(th.Shape.Shadow.OffsetX)
+	lift := dp(hoverLiftDp)
+	grow := dp(hoverGrowDp)
+	borderW := dp(th.Shape.BorderWidth)
+	return lift + baseX + grow + 2*borderW
+}
+
 func neoFrameOverheadY(gtx layout.Context, th *theme.Theme) int {
 	dp := func(v float32) int { return gtx.Dp(unit.Dp(v)) }
 	baseY := dp(th.Shape.Shadow.OffsetY)

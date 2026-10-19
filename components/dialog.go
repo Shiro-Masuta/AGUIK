@@ -10,6 +10,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
+	"github.com/Shiro-Masuta/AGUIK/glayout"
 	"github.com/Shiro-Masuta/AGUIK/interaction"
 	"github.com/Shiro-Masuta/AGUIK/theme"
 )
@@ -39,11 +40,7 @@ type Dialog struct {
 func (d *Dialog) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 	d.Clicked = -1
 
-	if len(d.actionBtns) != len(d.Actions) {
-		btns := make([]widget.Clickable, len(d.Actions))
-		copy(btns, d.actionBtns)
-		d.actionBtns = btns
-	}
+	d.actionBtns = glayout.Resize(d.actionBtns, len(d.Actions))
 
 	widthDp := d.Width
 	if widthDp == 0 {

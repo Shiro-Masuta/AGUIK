@@ -27,11 +27,7 @@ func (t *Tabs) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 	if t.Active < 0 || t.Active >= len(t.Items) {
 		t.Active = 0
 	}
-	if len(t.btns) != len(t.Items) {
-		btns := make([]widget.Clickable, len(t.Items))
-		copy(btns, t.btns)
-		t.btns = btns
-	}
+	t.btns = glayout.Resize(t.btns, len(t.Items))
 
 	activeBg, activeFg := variantColors(th, t.Variant)
 	if t.Variant == ButtonDefault {
@@ -46,7 +42,6 @@ func (t *Tabs) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 
 	children := make([]glayout.Child, len(t.Items))
 	for i, item := range t.Items {
-		i := i
 		bg, fg := th.Colors.Surface, th.Colors.Foreground
 		if i == t.Active {
 			bg, fg = activeBg, activeFg

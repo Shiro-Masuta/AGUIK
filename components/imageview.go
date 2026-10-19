@@ -12,6 +12,7 @@ import (
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 
+	"github.com/Shiro-Masuta/AGUIK/glayout"
 	"github.com/Shiro-Masuta/AGUIK/theme"
 )
 
@@ -79,7 +80,6 @@ type ImageView struct {
 	scaleX float32
 	scaleY float32
 	offset f32.Point
-	size   image.Point
 
 	cachedSrc image.Image
 	op        paint.ImageOp
@@ -149,13 +149,9 @@ func (v *ImageView) resolveStyle(th *theme.Theme, i int, h Highlight) HighlightS
 	}
 	col := variantColor(th, v.Variant)
 	if i == v.Active {
-		fill := col
-		fill.A = 70
-		return HighlightStyle{Fill: fill, Stroke: col, StrokeWidth: 2}
+		return HighlightStyle{Fill: glayout.WithAlpha(col, 70), Stroke: col, StrokeWidth: 2}
 	}
-	dim := col
-	dim.A = 40
-	return HighlightStyle{Fill: dim}
+	return HighlightStyle{Fill: glayout.WithAlpha(col, 40)}
 }
 
 // computeFit calcule scale/offset selon Fit — factorisé pour ne pas
@@ -190,7 +186,6 @@ func (v *ImageView) computeFit(size, b image.Point) {
 func (v *ImageView) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 	v.Clicked = -1
 	size := gtx.Constraints.Max
-	v.size = size
 
 	if v.Src == nil {
 		return layout.Dimensions{Size: size}

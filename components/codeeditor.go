@@ -165,7 +165,7 @@ func (c *CodeEditor) layoutContent(gtx layout.Context, th *theme.Theme) layout.D
 		ed.HintColor = th.Colors.Muted
 		// Couleur de sélection bien visible : c'est ce qui "montre" le
 		// code sélectionné.
-		ed.SelectionColor = withAlpha(th.Colors.Primary, 110)
+		ed.SelectionColor = glayout.WithAlpha(th.Colors.Primary, 110)
 		return ed.Layout(gtx)
 	}))
 
@@ -238,9 +238,4 @@ func drawFrame(gtx layout.Context, th *theme.Theme, bg, border color.NRGBA, w la
 
 	call.Add(gtx.Ops)
 	return dims
-}
-
-func withAlpha(c color.NRGBA, a uint8) color.NRGBA {
-	c.A = a
-	return c
 }

@@ -16,7 +16,6 @@ AGUIK2/
 ├── theme/        Tokens visuels et thème Ao
 └── cmd/
     ├── showcase/ Exemple fonctionnel de tous les composants
-    └── showcase2/ Dossier actuellement vide
 ```
 
 Le module Go est `github.com/Shiro-Masuta/AGUIK` et dépend principalement de `gioui.org v0.10.2`. Le module déclare Go `1.26.1`.

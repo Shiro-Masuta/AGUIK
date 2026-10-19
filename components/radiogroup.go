@@ -39,17 +39,12 @@ func (r *RadioGroup) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensio
 	if r.Selected < -1 || r.Selected >= len(r.Options) {
 		r.Selected = -1
 	}
-	if len(r.btns) != len(r.Options) {
-		btns := make([]widget.Clickable, len(r.Options))
-		copy(btns, r.btns)
-		r.btns = btns
-	}
+	r.btns = glayout.Resize(r.btns, len(r.Options))
 
 	checkedBg, checkedFg := toggleCheckedColors(th, r.Variant)
 
 	children := make([]glayout.Child, len(r.Options))
 	for i, opt := range r.Options {
-		i := i
 		if !r.Disabled && r.btns[i].Clicked(gtx) {
 			r.Selected = i
 			interaction.Invalidate(gtx)

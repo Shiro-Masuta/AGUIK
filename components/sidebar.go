@@ -32,17 +32,12 @@ func (s *Sidebar) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions 
 	if s.Active < 0 || s.Active >= len(s.Items) {
 		s.Active = 0
 	}
-	if len(s.btns) != len(s.Items) {
-		btns := make([]IconButton, len(s.Items))
-		copy(btns, s.btns)
-		s.btns = btns
-	}
+	s.btns = glayout.Resize(s.btns, len(s.Items))
 
 	pad := gtx.Dp(unit.Dp(th.Spacing.SM))
 
 	children := make([]glayout.Child, len(s.Items))
 	for i, item := range s.Items {
-		i := i
 		btn := &s.btns[i]
 		btn.Icon = item.Icon
 		btn.Size = s.Size

@@ -1,7 +1,12 @@
 package glayout
 
 import (
+	"image"
+	"slices"
+
+	"gioui.org/io/input"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/unit"
 )
 
@@ -22,51 +27,35 @@ func Inset(space float32, w layout.Widget) layout.Widget {
 
 // Row aligne des widgets horizontalement avec un espacement constant entre eux.
 func Row(spacing float32, alignment layout.Alignment, children ...Child) layout.Widget {
-	return func(gtx layout.Context) layout.Dimensions {
-		flexChildren := make([]layout.FlexChild, 0, len(children)*2)
-		for i, c := range children {
-			c := c
-			if c.weight > 0 {
-				flexChildren = append(flexChildren, layout.Flexed(c.weight, c.widget))
-			} else {
-				flexChildren = append(flexChildren, layout.Rigid(c.widget))
-			}
-			if i < len(children)-1 && spacing > 0 {
-				sp := spacing
-				flexChildren = append(flexChildren, layout.Rigid(Spacer(sp)))
-			}
-		}
-		return layout.Flex{Axis: layout.Horizontal, Alignment: alignment}.Layout(gtx, flexChildren...)
-	}
+	return flex(layout.Horizontal, spacing, alignment, children)
 }
 
 // Column aligne des widgets verticalement avec un espacement constant entre eux.
-/*
-fonctionnement :
-
-	Column(th.Spacing.MD, layout.Start,
-		Rigid(header),
-		Flexed(1, list),
-		Rigid(footer),
-	)
-
-*/
+//
+//	Column(th.Spacing.MD, layout.Start,
+//		Rigid(header),
+//		Flexed(1, list),
+//		Rigid(footer),
+//	)
 func Column(spacing float32, alignment layout.Alignment, children ...Child) layout.Widget {
+	return flex(layout.Vertical, spacing, alignment, children)
+}
+
+func flex(axis layout.Axis, spacing float32, alignment layout.Alignment, children []Child) layout.Widget {
+	spacer := Spacer(spacing)
 	return func(gtx layout.Context) layout.Dimensions {
-		flexChildren := make([]layout.FlexChild, 0, len(children)*2)
+		flexChildren := make([]layout.FlexChild, 0, 2*len(children))
 		for i, c := range children {
-			c := c
 			if c.weight > 0 {
 				flexChildren = append(flexChildren, layout.Flexed(c.weight, c.widget))
 			} else {
 				flexChildren = append(flexChildren, layout.Rigid(c.widget))
 			}
-			if i < len(children)-1 && spacing > 0 {
-				sp := spacing
-				flexChildren = append(flexChildren, layout.Rigid(Spacer(sp)))
+			if spacing > 0 && i < len(children)-1 {
+				flexChildren = append(flexChildren, layout.Rigid(spacer))
 			}
 		}
-		return layout.Flex{Axis: layout.Vertical, Alignment: alignment}.Layout(gtx, flexChildren...)
+		return layout.Flex{Axis: axis, Alignment: alignment}.Layout(gtx, flexChildren...)
 	}
 }
 
@@ -83,33 +72,16 @@ func Spacer(space float32) layout.Widget {
 // peut être incomplète si len(children) n'est pas un multiple de columns
 // (les colonnes manquantes restent simplement vides).
 func Grid(spacing float32, columns int, children ...layout.Widget) layout.Widget {
-	if columns < 1 {
-		columns = 1
-	}
-	return func(gtx layout.Context) layout.Dimensions {
-		rowCount := (len(children) + columns - 1) / columns
-		rows := make([]layout.Widget, 0, rowCount)
-		for i := 0; i < len(children); i += columns {
-			end := i + columns
-			if end > len(children) {
-				end = len(children)
-			}
-			rowChildren := children[i:end]
-			rows = append(rows, func(gtx layout.Context) layout.Dimensions {
-				flexChildren := make([]layout.FlexChild, 0, len(rowChildren)*2)
-				for j, child := range rowChildren {
-					child := child
-					flexChildren = append(flexChildren, layout.Flexed(1, child))
-					if j < len(rowChildren)-1 && spacing > 0 {
-						sp := spacing
-						flexChildren = append(flexChildren, layout.Rigid(Spacer(sp)))
-					}
-				}
-				return layout.Flex{Axis: layout.Horizontal}.Layout(gtx, flexChildren...)
-			})
+	columns = max(columns, 1)
+	rows := make([]Child, 0, (len(children)+columns-1)/columns)
+	for chunk := range slices.Chunk(children, columns) {
+		cells := make([]Child, len(chunk))
+		for i, w := range chunk {
+			cells[i] = Flexed(1, w)
 		}
-		return Column(spacing, layout.Start, wrapRigid(rows)...)(gtx)
+		rows = append(rows, Rigid(Row(spacing, layout.Start, cells...)))
 	}
+	return Column(spacing, layout.Start, rows...)
 }
 
 // Stack superpose des widgets les uns sur les autres, chacun occupant tout
@@ -129,10 +101,23 @@ func Stack(children ...layout.Widget) layout.Widget {
 	}
 }
 
-func wrapRigid(ws []layout.Widget) []Child {
-	cs := make([]Child, len(ws))
-	for i, w := range ws {
-		cs[i] = Rigid(w)
+// StretchWidth force la largeur reportée de w à gtx.Constraints.Max.X.
+// Flex additionne les tailles réelles de ses enfants sans les étirer.
+func StretchWidth(w layout.Widget) layout.Widget {
+	return func(gtx layout.Context) layout.Dimensions {
+		dims := w(gtx)
+		return layout.Dimensions{Size: image.Pt(gtx.Constraints.Max.X, dims.Size.Y)}
 	}
-	return cs
+}
+
+// Ghost layoute w pour obtenir ses dimensions, mais ne rejoue jamais ses
+// opérations : rien n'est peint ni cliquable.
+func Ghost(w layout.Widget) layout.Widget {
+	return func(gtx layout.Context) layout.Dimensions {
+		gtx.Source = input.Source{}
+		macro := op.Record(gtx.Ops)
+		dims := w(gtx)
+		macro.Stop()
+		return dims
+	}
 }

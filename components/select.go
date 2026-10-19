@@ -10,6 +10,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
+	"github.com/Shiro-Masuta/AGUIK/glayout"
 	"github.com/Shiro-Masuta/AGUIK/interaction"
 	"github.com/Shiro-Masuta/AGUIK/theme"
 )
@@ -35,11 +36,7 @@ func (s *Select) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 	if s.Selected < -1 || s.Selected >= len(s.Options) {
 		s.Selected = -1
 	}
-	if len(s.optionBtns) != len(s.Options) {
-		btns := make([]widget.Clickable, len(s.Options))
-		copy(btns, s.optionBtns)
-		s.optionBtns = btns
-	}
+	s.optionBtns = glayout.Resize(s.optionBtns, len(s.Options))
 
 	if !s.Disabled && s.trigger.Clicked(gtx) {
 		s.open = !s.open
@@ -120,9 +117,8 @@ func (s *Select) layoutDropdown(gtx layout.Context, th *theme.Theme, triggerSize
 	rowPadY := gtx.Dp(unit.Dp(th.Spacing.XS))
 
 	type recordedRow struct {
-		clicked bool
-		call    op.CallOp
-		dims    layout.Dimensions
+		call op.CallOp
+		dims layout.Dimensions
 	}
 
 	rows := make([]recordedRow, len(s.Options))
@@ -142,12 +138,7 @@ func (s *Select) layoutDropdown(gtx layout.Context, th *theme.Theme, triggerSize
 		rowDims := drawSelectRow(rgtx, th, opt.Label, hovered, rowPadY)
 		call := m.Stop()
 
-		// La zone de clic de l'option couvre TOUTE la ligne (pas juste le
-		// texte) — enregistrée après le rendu, sur la largeur complète.
-		fullRowDims := layout.Dimensions{Size: image.Pt(listW-2*pad, rowDims.Size.Y)}
-		_ = fullRowDims
-
-		rows[i] = recordedRow{clicked: clicked, call: call, dims: rowDims}
+		rows[i] = recordedRow{call: call, dims: rowDims}
 		rowsH += rowDims.Size.Y
 
 		if clicked {
