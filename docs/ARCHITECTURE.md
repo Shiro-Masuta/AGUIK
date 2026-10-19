@@ -6,11 +6,12 @@ Cette documentation décrit le code présent dans le dépôt et son fonctionneme
 
 ## 1. Vue d'ensemble
 
-Le projet est organisé en quatre packages principaux :
+Le projet est organisé en quatre packages principaux, plus le sous-package `components/table` :
 
 ```text
 AGUIK2/
 ├── components/   Composants visuels et interactifs
+│   └── table/    Table générique avec tri et réorganisation
 ├── glayout/      Helpers de composition de layouts Gio
 ├── interaction/  Hitboxes, focus et invalidation de frame
 ├── theme/        Tokens visuels et thème Ao
@@ -34,13 +35,13 @@ Depuis la racine du dépôt :
 go run ./cmd/showcase
 ```
 
-Pour vérifier la compilation de tout le module :
+Pour compiler et lancer les tests de tout le module :
 
 ```bash
 go test ./...
 ```
 
-Il n'y a actuellement pas de fichiers de test dans le dépôt. `go test ./...` sert donc surtout de vérification de compilation.
+Les tests actuels couvrent le tri de `Table`, le calcul des modes d'ajustement d'`ImageView` et les contraintes des champs de saisie. Les rendus Gio eux-mêmes ne sont pas testés.
 
 ## 3. Cycle de vie Gio
 
@@ -225,6 +226,20 @@ glayout.Column(th.Spacing.SM, layout.Start,
 `glayout.Stack(children...)` transforme chaque enfant en couche `layout.Expanded`. Le dernier enfant est dessiné au-dessus et reçoit la priorité visuelle et d'interaction dans les zones qu'il recouvre.
 
 C'est la bonne primitive pour un dialog ou une pile de toasts. Un overlay ne doit pas être ajouté comme un enfant ordinaire d'une `Column`, car il recevrait seulement l'espace résiduel de cette colonne.
+
+### `StretchWidth` et `Ghost`
+
+- `glayout.StretchWidth(w)` force la largeur reportée de `w` à `Constraints.Max.X` : un `Flex` additionne la taille réelle de ses enfants sans les étirer.
+- `glayout.Ghost(w)` mesure `w` sans jamais rejouer ses opérations ni recevoir d'événements : rien n'est peint ni cliquable. Utile pour réserver la largeur d'un widget affiché ailleurs.
+
+### Utilitaires (`glayout/utils.go`)
+
+| Fonction | Rôle |
+|---|---|
+| `Resize(s, n)` | Redimensionne un slice à `n` éléments en conservant les existants, typiquement un slice de `widget.Clickable` suivant `Options`. |
+| `BlendColor(base, tint, ratio)` | Mélange deux couleurs et retourne une couleur opaque. |
+| `WithAlpha(c, a)` | Retourne `c` avec le canal alpha `a`. |
+| `FillRect(gtx, col, size)` | Remplit un rectangle à l'origine courante. |
 
 ## 8. Package `interaction`
 

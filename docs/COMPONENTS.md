@@ -253,6 +253,38 @@ Champs :
 - `Thickness` : épaisseur en dp, par défaut la bordure du thème ;
 - `Length` : longueur en dp, ou tout l'espace disponible si `0`.
 
+### `ImageView`
+
+Affiche une `image.Image` avec des rectangles surlignés cliquables. Composant stateful : il garde la texture et la zone de clic entre les frames.
+
+```go
+view := components.ImageView{
+    Src:    img,
+    Fit:    components.FitContain,
+    Active: -1,
+    Highlights: []components.Highlight{
+        {Rect: image.Rect(10, 10, 120, 40)},
+    },
+}
+
+view.Layout(gtx, th)
+if view.Clicked >= 0 {
+    selected = view.Clicked
+}
+```
+
+| Champ | Description |
+|---|---|
+| `Src` | Image affichée. La remplacer reconstruit la texture au prochain `Layout`. |
+| `Fit` | `FitContain` (défaut, ratio préservé), `FitCover` (remplit et rogne) ou `FitFill` (étire sur X et Y indépendamment). |
+| `Highlights` | Rectangles en coordonnées pixel de l'image source, pas de l'écran. `Style` optionnel par rectangle. |
+| `Active` | Index du surlignage mis en accent, `-1` pour aucun. Ignoré pour les `Highlights` qui ont un `Style`. |
+| `Variant` | Couleur par défaut des surlignages sans `Style`. |
+| `Disabled` | Désactive la zone de clic. |
+| `Clicked` | Index du surlignage cliqué pendant cette frame, `-1` sinon. |
+
+Le dessin est toujours découpé à la zone du composant, y compris en `FitCover`. Le hit-test suit le même calcul d'échelle que le rendu, donc les clics restent justes en `FitFill`.
+
 ## Saisie utilisateur
 
 ### `Input`
@@ -641,16 +673,18 @@ state.toaster.Layout(gtx, th)
 
 ### `Table`
 
-`Table` est générique (`Table[T any]`) : chaque ligne est une valeur de ton propre type `T`. Contrairement aux autres composants, tu ne lui donnes pas directement du texte à afficher, mais des fonctions qui savent extraire ce texte depuis une ligne `T`.
+`Table` vit dans le package `github.com/Shiro-Masuta/AGUIK/components/table` et est générique (`Table[T any]`) : chaque ligne est une valeur de ton propre type `T`. Contrairement aux autres composants, tu ne lui donnes pas directement du texte à afficher, mais des fonctions qui savent extraire ce texte depuis une ligne `T`.
 
 ```go
+import "github.com/Shiro-Masuta/AGUIK/components/table"
+
 type Product struct {
     Name  string
-    Price string
+    Price int // euros : un tri sur du texte classerait "239€" avant "49€"
 }
 
-table := components.Table[Product]{
-    Columns: []components.TableColumn[Product]{
+products := table.Table[Product]{
+    Columns: []table.TableColumn[Product]{
         {
             Label:  "Nom",
             Weight: 2,
@@ -660,14 +694,15 @@ table := components.Table[Product]{
         {
             Label:  "Prix",
             Weight: 1,
-            Cell:   func(p Product) string { return p.Price },
+            Cell:   func(p Product) string { return strconv.Itoa(p.Price) + "€" },
             Less:   func(a, b Product) bool { return a.Price < b.Price },
         },
     },
     Rows: []Product{
-        {Name: "Clavier", Price: "49€"},
-        {Name: "Souris", Price: "19€"},
+        {Name: "Clavier", Price: 49},
+        {Name: "Souris", Price: 19},
     },
+    SortColumn: -1,
 }
 ```
 
@@ -679,6 +714,9 @@ Champs :
 | `Rows` | Les données affichées, un `T` par ligne. |
 | `SortColumn` | Index de la colonne actuellement triée, `-1` si aucune. |
 | `SortDirection` | `SortNone`, `SortAsc` ou `SortDesc`. |
+| `Reorderable` | Affiche des boutons haut/bas par ligne. Actifs seulement hors tri et si `MoveUpIcon` et `MoveDownIcon` sont fournies. |
+| `MoveUpIcon`, `MoveDownIcon` | Icônes des boutons de réorganisation. |
+| `EmptyText` | Texte affiché quand `Rows` est vide. |
 | `RowActions` | Fonction optionnelle construisant un widget à droite de chaque ligne (bouton supprimer, éditer...). `nil` = pas d'action. |
 
 Chaque `TableColumn[T]` contient :
@@ -690,7 +728,9 @@ Chaque `TableColumn[T]` contient :
 | `Cell` | Extrait le texte à afficher pour une ligne donnée. |
 | `Less` | Comparateur pour le tri. `nil` = colonne non triable (pas de flèche, clic ignoré). |
 
-Le tri est géré entièrement par `Table` : cliquer un en-tête triable bascule `Aucun → Ascendant → Descendant → Aucun` et retrie `Rows` sur place, sans intervention de l'appelant.
+Le tri est géré par `Table` : cliquer un en-tête triable bascule `Aucun → Ascendant → Descendant → Aucun`. Le tri ne modifie jamais `Rows` : il ne change que l'ordre d'affichage, donc revenir à `Aucun` restaure l'ordre d'origine.
+
+L'ordre d'affichage n'est recalculé que si le tri ou la longueur de `Rows` change. Si tu modifies le contenu de `Rows` sans changer sa longueur, appelle `Resort()`.
 
 ### Ajouter une action par ligne
 
@@ -711,7 +751,7 @@ table.RowActions = func(item Product, index int) layout.Widget {
 }
 ```
 
-`index` correspond à la position de la ligne **au moment du rendu de cette frame** — si `Rows` est retrié entre deux frames, `index` reste cohérent avec l'ordre affiché à cet instant, pas avec un identifiant stable dans le temps. Pour des suppressions fiables sur des listes qui changent souvent, préfère un champ d'identifiant unique dans `T` plutôt que de te fier uniquement à `index`.
+`index` est l'indice de la ligne dans `Rows`, stable même quand le tri est actif (il ne correspond donc pas à la position affichée). Il reste toutefois valide seulement tant que `Rows` ne change pas : pour des suppressions fiables sur des listes qui changent souvent, préfère un champ d'identifiant unique dans `T`.
 
 ### Persistance de l'état
 
@@ -719,7 +759,7 @@ Comme `Button` ou `Select`, `Table` contient un état Gio interne (`Clickable` p
 
 ```go
 type State struct {
-    products components.Table[Product]
+    products table.Table[Product]
 }
 ```
 
