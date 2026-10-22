@@ -221,14 +221,14 @@ func (t *Table[T]) reorderWidget(th *theme.Theme, idx int, b *tableReorderButton
 	return glayout.Row(th.Spacing.SM, layout.Middle,
 		glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			dims := b.up.Layout(gtx, th)
-			if b.up.Clicked {
+			if b.up.Clicked() {
 				t.requestMove(idx, idx-1)
 			}
 			return dims
 		}),
 		glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			dims := b.down.Layout(gtx, th)
-			if b.down.Clicked {
+			if b.down.Clicked() {
 				t.requestMove(idx, idx+1)
 			}
 			return dims

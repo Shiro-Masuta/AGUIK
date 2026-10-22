@@ -1,0 +1,19 @@
+# Binaires et sorties de build
+/bin/
+*.exe
+*.test
+*.out
+
+# Couverture et profils
+*.coverprofile
+*.prof
+
+# Éditeurs et système
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Données locales
+.env
+*.log

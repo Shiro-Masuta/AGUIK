@@ -33,6 +33,8 @@ AGUIK s'appuie sur les capacités de rendu et de gestion des événements de Gio
 | Feedback    | `Alert`, `Dialog`, `Toaster`, `Tooltip`        |
 | Indicateurs | `ProgressBar`, `Loader`, `Divider`             |
 
+Les composants spécialisés sont séparés dans `components/table`, `components/codeeditor`, `components/imageview`, `components/select` et `components/overlay`.
+
 ### Outils de composition
 
 Le package `glayout` propose des helpers pour construire des interfaces sans répéter la logique de layout Gio :
@@ -98,7 +100,7 @@ Pour vérifier la compilation du module :
 go test ./...
 ```
 
-> Le dépôt ne contient actuellement pas de fichiers de test dédiés. Cette commande sert principalement à vérifier que les packages compilent correctement.
+Les tests couvrent les layouts, les utilitaires, le tri et plusieurs interactions Gio. Lance `go test ./... -cover` pour consulter la couverture par package.
 
 ## Exemple d'utilisation
 
@@ -152,14 +154,14 @@ Les composants interactifs conservent leur état entre les frames.
 ```go
 dims := state.SaveButton.Layout(gtx, th)
 
-if state.SaveButton.Clicked {
+if state.SaveButton.Clicked() {
     save()
 }
 
 return dims
 ```
 
-`Clicked` représente le clic consommé pendant la frame courante : il ne s'agit pas d'un état permanent.
+`Clicked()` représente le clic consommé pendant la frame courante : il ne s'agit pas d'un état permanent.
 
 **Important :** n'initialise pas les composants stateful dans une fonction de rendu appelée à chaque frame. Conserve-les dans une structure d'état persistante afin de préserver leurs événements, leur focus et leurs animations.
 
@@ -169,13 +171,17 @@ Le projet est organisé en quatre packages principaux, accompagnés d'une applic
 
 ```text
 AGUIK/
-├── components/       # Composants visuels et interactifs
+├── components/       # Composants fondamentaux
+│   ├── codeeditor/   # Éditeur de code avec gouttière
+│   ├── imageview/    # Images avec surlignages
+│   ├── overlay/      # Dialogues et notifications
+│   ├── select/       # Dropdown
+│   └── table/        # Tableau triable et réorganisable
 ├── glayout/          # Helpers de composition Gio
 ├── interaction/      # Hitboxes, focus et invalidation
 ├── theme/            # Tokens visuels et thème Ao
 └── cmd/
-    ├── showcase/     # Application de démonstration
-    └── showcase2/    # Dossier actuellement vide
+    └── showcase/     # Application de démonstration
 ```
 
 ### `components`
@@ -244,7 +250,7 @@ AGUIK se concentre sur la couche UI et la composition visuelle. Certaines respon
 - Gestion de plusieurs thèmes.
 - Chargement et fourniture des icônes.
 
-Le projet ne dispose pas encore de tests automatisés dédiés.
+La couverture des composants n'est pas encore exhaustive ; consulte `docs/TODO.md` pour les tests et améliorations prévus.
 
 ## Documentation
 

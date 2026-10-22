@@ -46,10 +46,7 @@ func constrainInputDims(dims inputDims, pad int, max, overhead image.Point) inpu
 // material.EditorStyle déjà configuré, et le positionne dedans. Partagé
 // par Input et TextArea — seule la manière dont dims est calculée diffère.
 func layoutInputFrame(gtx layout.Context, th *theme.Theme, ed material.EditorStyle, dims inputDims, pad int, bg color.NRGBA, focused bool) layout.Dimensions {
-	dims = constrainInputDims(dims, pad, gtx.Constraints.Max, image.Pt(
-		neoFrameOverheadX(gtx, th),
-		neoFrameOverheadY(gtx, th),
-	))
+	dims = constrainInputDims(dims, pad, gtx.Constraints.Max, NeoFrameOverhead(gtx, th))
 	innerW := dims.width + 2*pad
 	innerH := dims.height + 2*pad
 

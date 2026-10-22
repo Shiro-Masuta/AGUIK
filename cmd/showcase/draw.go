@@ -32,11 +32,12 @@ func (s *state) layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 
 	// Ordre = z-order : le dernier enfant est dessiné au-dessus.
 	return glayout.Stack(
+		func(gtx layout.Context) layout.Dimensions { return s.focusClearer.Layout(gtx) },
 		main,
 		func(gtx layout.Context) layout.Dimensions {
 			dims := s.dialog.Layout(gtx, th)
-			if s.dialog.Clicked >= 0 && s.dialog.Clicked < len(s.dialog.Actions) {
-				switch s.dialog.Actions[s.dialog.Clicked].Text {
+			if s.dialog.Clicked() >= 0 && s.dialog.Clicked() < len(s.dialog.Actions) {
+				switch s.dialog.Actions[s.dialog.Clicked()].Text {
 				case "Supprimer":
 					s.toast("Profil supprimé", "C'est fait.", components.ButtonError)
 				case "Annuler":
@@ -77,7 +78,7 @@ func (s *state) componentsPage(gtx layout.Context, th *theme.Theme) layout.Dimen
 			glayout.Rigid(bind(th, &s.progress)),
 			glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				dims := s.progressBtn.Layout(gtx, th)
-				if s.progressBtn.Clicked {
+				if s.progressBtn.Clicked() {
 					s.progress.Value += 0.1
 					if s.progress.Value > 1 {
 						s.progress.Value = 0
@@ -90,7 +91,7 @@ func (s *state) componentsPage(gtx layout.Context, th *theme.Theme) layout.Dimen
 		glayout.Rigid(bind(th, &s.role)),
 		glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			dims := s.openDialog.Layout(gtx, th)
-			if s.openDialog.Clicked {
+			if s.openDialog.Clicked() {
 				s.dialog.Open = true
 			}
 			return dims
@@ -109,7 +110,7 @@ func (s *state) formPage(gtx layout.Context, th *theme.Theme) layout.Dimensions 
 		glayout.Rigid(bind(th, &s.terms)),
 		glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			dims := s.save.Layout(gtx, th)
-			if s.save.Clicked {
+			if s.save.Clicked() {
 				switch {
 				case !s.terms.Bool.Value:
 					s.toast("Conditions", "Accepte les conditions d'abord.", components.ButtonWarning)

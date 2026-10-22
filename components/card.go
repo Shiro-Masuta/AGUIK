@@ -53,16 +53,15 @@ func Card(th *theme.Theme, content layout.Widget, opts ...CardOption) layout.Wid
 
 	return func(gtx layout.Context) layout.Dimensions {
 		pad := gtx.Dp(unit.Dp(cs.padding))
-		overheadX := neoFrameOverheadX(gtx, th)
-		overheadY := neoFrameOverheadY(gtx, th)
+		overhead := NeoFrameOverhead(gtx, th)
 
 		macro := op.Record(gtx.Ops)
 		cgtx := gtx
 		cgtx.Constraints.Min = image.Point{}
-		if maxX := gtx.Constraints.Max.X - 2*pad - overheadX; maxX > 0 {
+		if maxX := gtx.Constraints.Max.X - 2*pad - overhead.X; maxX > 0 {
 			cgtx.Constraints.Max.X = maxX
 		}
-		if maxY := gtx.Constraints.Max.Y - 2*pad - overheadY; maxY > 0 {
+		if maxY := gtx.Constraints.Max.Y - 2*pad - overhead.Y; maxY > 0 {
 			cgtx.Constraints.Max.Y = maxY
 		}
 		contentDims := content(cgtx)
@@ -71,11 +70,11 @@ func Card(th *theme.Theme, content layout.Widget, opts ...CardOption) layout.Wid
 		innerW := contentDims.Size.X + 2*pad
 		innerH := contentDims.Size.Y + 2*pad
 
-		if cs.fillWidth && gtx.Constraints.Max.X > overheadX {
-			innerW = gtx.Constraints.Max.X - overheadX
+		if cs.fillWidth && gtx.Constraints.Max.X > overhead.X {
+			innerW = gtx.Constraints.Max.X - overhead.X
 		}
-		if cs.fillHeight && gtx.Constraints.Max.Y > overheadY {
-			innerH = gtx.Constraints.Max.Y - overheadY
+		if cs.fillHeight && gtx.Constraints.Max.Y > overhead.Y {
+			innerH = gtx.Constraints.Max.Y - overhead.Y
 		}
 		frame := NeoFrame(gtx, th, innerW, innerH, cs.background, false, false)
 

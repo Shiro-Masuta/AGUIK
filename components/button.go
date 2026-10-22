@@ -40,8 +40,10 @@ type Button struct {
 	Variant   ButtonVariant
 	Size      ButtonSize
 	Disabled  bool
-	Clicked   bool
+	clicked   bool
 }
+
+func (b *Button) Clicked() bool { return b.clicked }
 
 func (b *Button) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 	clicked := false
@@ -52,7 +54,7 @@ func (b *Button) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 			interaction.Invalidate(gtx)
 		}
 	}
-	b.Clicked = clicked
+	b.clicked = clicked
 
 	bg, fg := variantColors(th, b.Variant)
 	if b.Disabled {

@@ -1,4 +1,4 @@
-package components
+package overlay
 
 import (
 	"image"
@@ -10,6 +10,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
+	"github.com/Shiro-Masuta/AGUIK/components"
 	"github.com/Shiro-Masuta/AGUIK/glayout"
 	"github.com/Shiro-Masuta/AGUIK/interaction"
 	"github.com/Shiro-Masuta/AGUIK/theme"
@@ -17,7 +18,7 @@ import (
 
 type DialogAction struct {
 	Text    string
-	Variant ButtonVariant
+	Variant components.ButtonVariant
 }
 
 const defaultDialogWidthDp = 320
@@ -29,16 +30,18 @@ type Dialog struct {
 	Actions                []DialogAction
 	Width                  float32
 	DismissOnBackdropClick bool
-	Clicked                int
 	AutoClose              bool
 
+	clicked      int
 	overlay      OverlayState
-	actionBtns   []widget.Clickable
+	actionBtns   []components.Button
 	cardBlockBtn widget.Clickable
 }
 
+func (d *Dialog) Clicked() int { return d.clicked }
+
 func (d *Dialog) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
-	d.Clicked = -1
+	d.clicked = -1
 
 	d.actionBtns = glayout.Resize(d.actionBtns, len(d.Actions))
 
@@ -68,13 +71,13 @@ func (d *Dialog) layoutCard(gtx layout.Context, th *theme.Theme, cardW int) layo
 	var titleW, msgW layout.Widget
 	var titleDims, msgDims layout.Dimensions
 	if d.Title != "" {
-		titleW = Text(th, d.Title, WithSize(th.Typography.FontSize*1.1), WithWeight(font.Bold))
+		titleW = components.Text(th, d.Title, components.WithSize(th.Typography.FontSize*1.1), components.WithWeight(font.Bold))
 		m := op.Record(tgtx.Ops)
 		titleDims = titleW(tgtx)
 		m.Stop()
 	}
 	if d.Message != "" {
-		msgW = Text(th, d.Message, WithSize(th.Typography.FontSize*0.95), WithColor(th.Colors.Muted))
+		msgW = components.Text(th, d.Message, components.WithSize(th.Typography.FontSize*0.95), components.WithColor(th.Colors.Muted))
 		m := op.Record(tgtx.Ops)
 		msgDims = msgW(tgtx)
 		m.Stop()
@@ -91,19 +94,18 @@ func (d *Dialog) layoutCard(gtx layout.Context, th *theme.Theme, cardW int) layo
 	actions := make([]recordedAction, len(d.Actions))
 	actionsW, actionsH := 0, 0
 	for i, act := range d.Actions {
-		clicked := d.actionBtns[i].Clicked(gtx)
-		bg, fg := variantColors(th, act.Variant)
-		hovered := d.actionBtns[i].Hovered()
-		pressed := d.actionBtns[i].Pressed()
-		content := Text(th, act.Text, WithColor(fg), WithWeight(font.SemiBold))
+		button := &d.actionBtns[i]
+		button.Text = act.Text
+		button.Variant = act.Variant
+		button.Size = components.SizeMD
 
 		m := op.Record(gtx.Ops)
-		dims := layoutButtonFrame(gtx, th, content, paddingFor(th, SizeMD), bg, hovered, pressed, false, &d.actionBtns[i])
+		dims := button.Layout(gtx, th)
 		call := m.Stop()
 
 		actions[i] = recordedAction{call: call, dims: dims}
-		if clicked {
-			d.Clicked = i
+		if button.Clicked() {
+			d.clicked = i
 			interaction.Invalidate(gtx)
 			if d.AutoClose {
 				d.Open = false
@@ -124,7 +126,7 @@ func (d *Dialog) layoutCard(gtx layout.Context, th *theme.Theme, cardW int) layo
 	}
 	innerW := cardW - 2*borderW
 
-	frame := NeoFrame(gtx, th, innerW, innerH, th.Colors.Surface, false, false)
+	frame := components.NeoFrame(gtx, th, innerW, innerH, th.Colors.Surface, false, false)
 
 	blockArea := clip.Rect(image.Rectangle{Max: frame.CanvasDim}).Push(gtx.Ops)
 	d.cardBlockBtn.Layout(gtx, func(gtx layout.Context) layout.Dimensions {

@@ -1,4 +1,4 @@
-package components
+package overlay
 
 import (
 	"image"
@@ -9,6 +9,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
+	"github.com/Shiro-Masuta/AGUIK/components"
 	"github.com/Shiro-Masuta/AGUIK/theme"
 )
 
@@ -18,13 +19,13 @@ type ToastConfig struct {
 	Icon        *widget.Icon
 	Title       string
 	Message     string
-	Variant     ButtonVariant
+	Variant     components.ButtonVariant
 	Dismissible bool
 	Duration    time.Duration // 0 = pas d'auto-dismiss (fermeture manuelle uniquement)
 }
 
 type toastEntry struct {
-	alert    Alert
+	alert    components.Alert
 	deadline time.Time // zero si pas d'auto-dismiss
 }
 
@@ -49,7 +50,7 @@ const (
 // si appelé avant que Toaster.Layout ne tourne, sinon à la suivante.
 func (t *Toaster) Show(cfg ToastConfig) {
 	e := toastEntry{
-		alert: Alert{
+		alert: components.Alert{
 			Icon:        cfg.Icon,
 			Title:       cfg.Title,
 			Message:     cfg.Message,

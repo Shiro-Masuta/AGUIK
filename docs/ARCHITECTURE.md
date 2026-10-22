@@ -6,12 +6,16 @@ Cette documentation décrit le code présent dans le dépôt et son fonctionneme
 
 ## 1. Vue d'ensemble
 
-Le projet est organisé en quatre packages principaux, plus le sous-package `components/table` :
+Le projet expose les packages fondamentaux `components`, `glayout`, `interaction` et `theme`, ainsi que des sous-packages spécialisés :
 
 ```text
-AGUIK2/
-├── components/   Composants visuels et interactifs
-│   └── table/    Table générique avec tri et réorganisation
+AGUIK/
+├── components/   Composants fondamentaux
+│   ├── table/      Table générique avec tri et réorganisation
+│   ├── codeeditor/ Éditeur de code avec gouttière
+│   ├── imageview/  Image avec ajustement et surlignages
+│   ├── select/     Dropdown à sélection unique
+│   └── overlay/    Dialogues, overlays et toasts
 ├── glayout/      Helpers de composition de layouts Gio
 ├── interaction/  Hitboxes, focus et invalidation de frame
 ├── theme/        Tokens visuels et thème Ao
@@ -63,8 +67,9 @@ Les structures suivantes doivent vivre dans un état conservé entre les frames 
 - `components.Button`, `components.IconButton`
 - `components.Input`, `components.TextArea`
 - `components.Checkbox`, `components.Switch`
-- `components.RadioGroup`, `components.Select`, `components.Tabs`
-- `components.Dialog`, `components.Toaster`, `components.Alert`
+- `components.RadioGroup`, `select.Select`, `components.Tabs`
+- `overlay.Dialog`, `overlay.Toaster`, `components.Alert`
+- `codeeditor.CodeEditor`, `imageview.ImageView`
 - `components.Sidebar`
 - toute structure Gio contenant `widget.Clickable`, `widget.Editor`, `widget.Bool` ou un timer logique
 
@@ -74,7 +79,7 @@ Exemple :
 type appState struct {
     saveButton components.Button
     name       components.Input
-    dialog     components.Dialog
+    dialog     overlay.Dialog
 }
 
 state := &appState{
@@ -90,7 +95,7 @@ state := &appState{
 }
 ```
 
-La configuration fixe peut être initialisée une fois. Pendant le rendu, on appelle seulement `Layout` et on lit les propriétés exposées (`Clicked`, `Value`, `Selected`, `Active`, etc.).
+La configuration fixe peut être initialisée une fois. Pendant le rendu, on appelle `Layout`, on lit les résultats ponctuels via `Clicked()` et les états durables via les propriétés exposées (`Value`, `Selected`, `Active`, etc.).
 
 ## 4. Contrat de rendu des composants
 
@@ -296,19 +301,19 @@ Une icône doit être chargée ou construite par l'application, puis passée au 
 
 ### Boutons
 
-`Button` est un composant stateful. Champs principaux : `Text`, `Icon`, `Variant`, `Size`, `Disabled`, `Clicked`.
+`Button` est un composant stateful. Champs principaux : `Text`, `Icon`, `Variant`, `Size`, `Disabled`. `Clicked()` expose le clic consommé pendant la frame courante.
 
 Les variantes sont `ButtonDefault`, `ButtonPrimary`, `ButtonSecondary`, `ButtonSuccess`, `ButtonWarning` et `ButtonError`. Les tailles sont `SizeSM`, `SizeMD` et `SizeLG`.
 
 ```go
 dims := state.saveButton.Layout(gtx, th)
-if state.saveButton.Clicked {
+if state.saveButton.Clicked() {
     save()
 }
 return dims
 ```
 
-`Clicked` représente le clic consommé pendant la frame courante : il ne faut pas le traiter comme un booléen permanent.
+`Clicked()` représente le clic consommé pendant la frame courante : il ne faut pas le traiter comme un booléen permanent.
 
 `IconButton` suit le même modèle, mais son contenu est une icône. Il peut afficher un tooltip directement avec `TooltipText` et `TooltipPlacement`.
 
@@ -475,7 +480,7 @@ func screen(gtx layout.Context, th *theme.Theme, state *appState) layout.Dimensi
                 }),
                 glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
                     dims := state.saveButton.Layout(gtx, th)
-                    if state.saveButton.Clicked {
+                    if state.saveButton.Clicked() {
                         state.dialog.Open = true
                     }
                     return dims

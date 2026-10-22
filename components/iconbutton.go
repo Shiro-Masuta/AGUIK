@@ -14,11 +14,13 @@ type IconButton struct {
 	Variant   ButtonVariant
 	Size      ButtonSize
 	Disabled  bool
-	Clicked   bool
+	clicked   bool
 
 	TooltipText      string
 	TooltipPlacement TooltipPlacement
 }
+
+func (b *IconButton) Clicked() bool { return b.clicked }
 
 func (b *IconButton) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions {
 	clicked := false
@@ -29,7 +31,7 @@ func (b *IconButton) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensio
 			interaction.Invalidate(gtx)
 		}
 	}
-	b.Clicked = clicked
+	b.clicked = clicked
 
 	bg, fg := variantColors(th, b.Variant)
 	if b.Disabled {

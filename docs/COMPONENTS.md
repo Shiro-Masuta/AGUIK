@@ -1,6 +1,6 @@
 # Guide d'utilisation des composants AGUIK
 
-Ce guide explique comment utiliser chaque composant du package `components`, quels champs configurer et quelles valeurs lire après une interaction.
+Ce guide explique comment utiliser les composants AGUIK, quels champs configurer et quelles valeurs lire après une interaction. Les composants spécialisés sont dans `components/codeeditor`, `components/imageview`, `components/select` et `components/overlay`. Dans les exemples, l'import `components/select` est nommé `selectwidget` pour éviter le mot réservé Go `select`.
 
 AGUIK repose sur Gio. Tous les composants doivent être rendus pendant une frame avec un `layout.Context` et un `*theme.Theme`.
 
@@ -9,11 +9,11 @@ func view(gtx layout.Context, th *theme.Theme, state *State) layout.Dimensions {
     return state.save.Layout(gtx, th)
 }
 ```
-
+view := imageview.ImageView{
 ## Règle essentielle : conserver l'état
-
+    Fit:    imageview.FitContain,
 Les composants interactifs doivent être créés une seule fois puis conservés entre les frames. Ne les instanciez pas dans la fonction de rendu.
-
+    Highlights: []imageview.Highlight{
 ```go
 type State struct {
     saveButton components.Button
@@ -165,13 +165,13 @@ Champs :
 | `Variant` | Couleur sémantique. |
 | `Size` | `SizeSM`, `SizeMD` ou `SizeLG`. |
 | `Disabled` | Désactive le bouton et sa hitbox. |
-| `Clicked` | Vaut `true` pendant la frame où le clic est consommé. |
+| `Clicked()` | Méthode de lecture ; vaut `true` pendant la frame où le clic est consommé. |
 
 Utilisation :
 
 ```go
 dims := state.saveButton.Layout(gtx, th)
-if state.saveButton.Clicked {
+if state.saveButton.Clicked() {
     saveProfile()
 }
 return dims
@@ -258,18 +258,18 @@ Champs :
 Affiche une `image.Image` avec des rectangles surlignés cliquables. Composant stateful : il garde la texture et la zone de clic entre les frames.
 
 ```go
-view := components.ImageView{
+view := imageview.ImageView{
     Src:    img,
-    Fit:    components.FitContain,
+    Fit:    imageview.FitContain,
     Active: -1,
-    Highlights: []components.Highlight{
+    Highlights: []imageview.Highlight{
         {Rect: image.Rect(10, 10, 120, 40)},
     },
 }
 
 view.Layout(gtx, th)
-if view.Clicked >= 0 {
-    selected = view.Clicked
+if view.Clicked() >= 0 {
+    selected = view.Clicked()
 }
 ```
 
@@ -281,7 +281,7 @@ if view.Clicked >= 0 {
 | `Active` | Index du surlignage mis en accent, `-1` pour aucun. Ignoré pour les `Highlights` qui ont un `Style`. |
 | `Variant` | Couleur par défaut des surlignages sans `Style`. |
 | `Disabled` | Désactive la zone de clic. |
-| `Clicked` | Index du surlignage cliqué pendant cette frame, `-1` sinon. |
+| `Clicked()` | Index du surlignage cliqué pendant cette frame, `-1` sinon. |
 
 Le dessin est toujours découpé à la zone du composant, y compris en `FitCover`. Le hit-test suit le même calcul d'échelle que le rendu, donc les clics restent justes en `FitFill`.
 
@@ -446,9 +446,9 @@ default:
 Dropdown à sélection unique.
 
 ```go
-role := components.Select{
+role := selectwidget.Select{
     Placeholder: "Choisir un rôle...",
-    Options: []components.SelectOption{
+    Options: []selectwidget.SelectOption{
         {Label: "Administrateur"},
         {Label: "Éditeur"},
         {Label: "Lecteur"},
@@ -588,13 +588,13 @@ Après le layout, `alert.Closed()` indique si l'utilisateur a fermé l'alerte. U
 Fenêtre modale centrée avec backdrop.
 
 ```go
-dialog := components.Dialog{
+dialog := overlay.Dialog{
     Title:                  "Supprimer le profil ?",
     Message:                "Cette action est irréversible.",
     Width:                  360,
     DismissOnBackdropClick: true,
     AutoClose:              true,
-    Actions: []components.DialogAction{
+    Actions: []overlay.DialogAction{
         {Text: "Annuler", Variant: components.ButtonDefault},
         {Text: "Supprimer", Variant: components.ButtonError},
     },
@@ -609,7 +609,7 @@ Champs :
 - `Width` : 320 dp par défaut ;
 - `DismissOnBackdropClick` : ferme sur clic hors de la carte ;
 - `AutoClose` : ferme après une action ;
-- `Clicked` : index de l'action cliquée pendant la frame courante.
+- `Clicked()` : index de l'action cliquée pendant la frame courante (`-1` si aucune).
 
 Chaque `DialogAction` contient `Text` et `Variant`.
 
@@ -617,8 +617,8 @@ Utilisation recommandée :
 
 ```go
 state.dialog.Layout(gtx, th)
-if state.dialog.Clicked >= 0 {
-    action := state.dialog.Actions[state.dialog.Clicked]
+if state.dialog.Clicked() >= 0 {
+    action := state.dialog.Actions[state.dialog.Clicked()]
     switch action.Text {
     case "Supprimer":
         deleteProfile()
@@ -635,7 +635,7 @@ Un dialog doit être placé dans un `glayout.Stack` après le contenu principal 
 Pile d'alertes en bas à droite.
 
 ```go
-toaster := components.Toaster{
+toaster := overlay.Toaster{
     Gap:      8,
     Margin:   16,
     MaxWidth: 320,
@@ -651,7 +651,7 @@ Champs :
 Ajouter un toast :
 
 ```go
-state.toaster.Show(components.ToastConfig{
+state.toaster.Show(overlay.ToastConfig{
     Title:       "Enregistré",
     Message:     "Les modifications sont sauvegardées.",
     Variant:     components.ButtonSuccess,
@@ -743,7 +743,7 @@ table.RowActions = func(item Product, index int) layout.Widget {
         del.Size = components.SizeSM
 
         dims := del.Layout(gtx, th)
-        if del.Clicked {
+        if del.Clicked() {
             table.Rows = append(table.Rows[:index], table.Rows[index+1:]...)
         }
         return dims
@@ -817,9 +817,9 @@ Le dernier enfant est dessiné au-dessus des précédents.
 func saveButton(th *theme.Theme, state *State) layout.Widget {
     return func(gtx layout.Context) layout.Dimensions {
         dims := state.save.Layout(gtx, th)
-        if state.save.Clicked {
+        if state.save.Clicked() {
             state.lastAction = "Profil enregistré"
-            state.toaster.Show(components.ToastConfig{
+            state.toaster.Show(overlay.ToastConfig{
                 Title:    "Enregistré",
                 Variant:  components.ButtonSuccess,
                 Duration: 3 * time.Second,

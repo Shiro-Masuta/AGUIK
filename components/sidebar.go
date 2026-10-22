@@ -51,7 +51,7 @@ func (s *Sidebar) Layout(gtx layout.Context, th *theme.Theme) layout.Dimensions 
 
 		children[i] = glayout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			dims := btn.Layout(gtx, th)
-			if btn.Clicked && s.Active != i {
+			if btn.Clicked() && s.Active != i {
 				s.Active = i
 				interaction.Invalidate(gtx)
 			}

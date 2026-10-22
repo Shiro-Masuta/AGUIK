@@ -8,7 +8,10 @@ import (
 	"golang.org/x/exp/shiny/materialdesign/icons"
 
 	"github.com/Shiro-Masuta/AGUIK/components"
+	"github.com/Shiro-Masuta/AGUIK/components/overlay"
+	selectwidget "github.com/Shiro-Masuta/AGUIK/components/select"
 	"github.com/Shiro-Masuta/AGUIK/components/table"
+	"github.com/Shiro-Masuta/AGUIK/interaction"
 )
 
 type product struct {
@@ -19,16 +22,17 @@ type product struct {
 
 // state regroupe tous les composants stateful : créé une fois, jamais dans draw.
 type state struct {
-	sidebar components.Sidebar
-	toaster components.Toaster
-	dialog  components.Dialog
+	focusClearer interaction.FocusClearer
+	sidebar      components.Sidebar
+	toaster      overlay.Toaster
+	dialog       overlay.Dialog
 
 	// Page composants
 	switchNotif components.Switch
 	progress    components.ProgressBar
 	progressBtn components.Button
 	loader      components.Loader
-	role        components.Select
+	role        selectwidget.Select
 	openDialog  components.Button
 
 	// Page formulaire
@@ -65,14 +69,14 @@ func newState() *state {
 			Variant: components.ButtonPrimary,
 			Size:    components.SizeMD,
 		},
-		toaster: components.Toaster{Gap: 8, Margin: 16, MaxWidth: 320},
-		dialog: components.Dialog{
+		toaster: overlay.Toaster{Gap: 8, Margin: 16, MaxWidth: 320},
+		dialog: overlay.Dialog{
 			Title:                  "Supprimer le profil ?",
 			Message:                "Cette action est irréversible.",
 			Width:                  360,
 			DismissOnBackdropClick: true,
 			AutoClose:              true,
-			Actions: []components.DialogAction{
+			Actions: []overlay.DialogAction{
 				{Text: "Annuler", Variant: components.ButtonDefault},
 				{Text: "Supprimer", Variant: components.ButtonError},
 			},
@@ -82,9 +86,9 @@ func newState() *state {
 		progress:    components.ProgressBar{Value: 0.3, Variant: components.ButtonPrimary, Width: 240},
 		progressBtn: components.Button{Text: "+10 %", Variant: components.ButtonSecondary, Size: components.SizeSM},
 		loader:      components.Loader{Size: 28, Variant: components.ButtonPrimary},
-		role: components.Select{
+		role: selectwidget.Select{
 			Placeholder: "Choisir un rôle...",
-			Options: []components.SelectOption{
+			Options: []selectwidget.SelectOption{
 				{Label: "Administrateur"}, {Label: "Éditeur"}, {Label: "Lecteur"},
 			},
 			Selected: -1,
@@ -129,7 +133,7 @@ func newState() *state {
 
 func (s *state) toast(title, msg string, v components.ButtonVariant) {
 	s.lastAction = title
-	s.toaster.Show(components.ToastConfig{
+	s.toaster.Show(overlay.ToastConfig{
 		Title:       title,
 		Message:     msg,
 		Variant:     v,
